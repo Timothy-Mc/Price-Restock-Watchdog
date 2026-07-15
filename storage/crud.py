@@ -63,6 +63,10 @@ def record_price_check(session, product, price, in_stock, error=None):
         product.consecutive_failures = 0
         product.is_broken = False
 
-    session.commit()
+    try:
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
 
     return product

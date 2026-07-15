@@ -1,3 +1,6 @@
+import pytest
+from sqlalchemy.exc import IntegrityError
+
 from storage import crud
 from storage.models import PriceHistory
 from config import config
@@ -52,3 +55,15 @@ def test_record_price_check_marks_broken_at_configured_threshold(session, produc
 
     assert result.consecutive_failures == 2
     assert result.is_broken is True
+
+
+def test_record_price_check_rolls_back_on_commit_failure(session, product, monkeypatch):
+    def failing_commit():
+        raise IntegrityError("mock failure", {}, Exception("boom"))
+
+    monkeypatch.setattr(session, "commit", failing_commit)
+
+    with pytest.raises(IntegrityError):
+        crud.record_price_check(session, product, None, None, error="Timeout")
+
+    assert product.consecutive_failures == 0
