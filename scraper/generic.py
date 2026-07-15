@@ -1,4 +1,6 @@
 import re
+import json
+from bs4 import BeautifulSoup
 
 def _parse_price(text: str | None) -> float | None:
     if text is None:
@@ -51,3 +53,44 @@ def _parse_availability(value: str | None) -> bool | None:
     
     if normalise in unavailable_terms:
         return False
+    
+
+def _try_json_ld(soup) -> tuple[float | None, bool | None, str | None]:
+    scripts = soup.find_all("script", type="application/ld+json")
+
+    for script in scripts:
+        try:
+            data = json.loads(script.string)
+
+        except (json.JSONDecodeError, TypeError):
+            continue
+
+        products = []
+
+        if isinstance(data, dict) and data.get("@type") == "Product":
+            products.append(data)
+
+        elif isinstance(data, dict) and "@graph" in data:
+            for item in data["@graph"]:
+                if isinstance(item, dict) and item.get("@type") == "Product":
+                    products.append(item)
+
+        for product in products:
+            offers = product.get("offers", {})
+
+            if not offers:
+                continue
+
+            if isinstance(offers, list):
+                offers = offers[0]
+
+            if not isinstance(offers, dict):
+                continue
+
+            price = _parse_price(offers.get("price"))
+            availability = _parse_availability(offers.get("availability"))
+            name = product.get("name")
+
+            return price, availability, name
+        
+    return None, None, None
