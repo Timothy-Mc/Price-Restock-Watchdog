@@ -1,5 +1,6 @@
 from datetime import datetime
 from storage.models import Product, PriceHistory
+from config import config
 
 def add_product(session, url, name, target_price, alert_email):
 
@@ -55,11 +56,12 @@ def record_price_check(session, product, price, in_stock, error=None):
 
     if error:
         product.consecutive_failures += 1
+        if product.consecutive_failures >= config.MAX_CONSECUTIVE_FAILURES:
+            product.is_broken = True
     else:
         update_product(session, product, price, in_stock)
-
-    if product.consecutive_failures >= 5:
-        product.is_broken = True
+        product.consecutive_failures = 0
+        product.is_broken = False
 
     session.commit()
 

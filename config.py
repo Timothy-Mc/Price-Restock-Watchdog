@@ -18,4 +18,6 @@ class Config:
 
     DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK")
 
+    MAX_CONSECUTIVE_FAILURES = int(os.getenv("MAX_CONSECUTIVE_FAILURES", 5))
+
 config = Config()
