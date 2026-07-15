@@ -1,6 +1,23 @@
-.env
-.env.local
-.env.production
+# Virtual environment
+.venv/
 
+# Python
 __pycache__/
 *.pyc
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.sqlite3
+
+testers
+
+CLAUDE.md
+DESIGN.md
+PRODUCT.md
+
+docs/
+.superpowers
+.claude
