@@ -137,3 +137,69 @@ def test_try_json_ld_skips_malformed_json_and_uses_next_script():
     soup = BeautifulSoup(html, "html.parser")
 
     assert generic._try_json_ld(soup) == (5.00, True, "Recovered Product")
+
+
+def test_try_meta_tags_uses_og_price():
+    html = """
+    <meta property="og:price:amount" content="49.95">
+    <meta property="og:title" content="Test Product">
+    <meta property="product:availability" content="In Stock">
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert generic._try_meta_tags(soup) == (
+        49.95,
+        True,
+        "Test Product",
+    )
+
+def test_try_meta_tags_falls_back_to_product_price():
+    html = """
+    <meta property="product:price:amount" content="19.99">
+    <meta property="og:title" content="Test Product">
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert generic._try_meta_tags(soup) == (
+        19.99,
+        None,
+        "Test Product",
+    )
+
+def test_try_meta_tags_returns_none_when_no_meta_tags():
+    soup = BeautifulSoup("<html></html>", "html.parser")
+
+    assert generic._try_meta_tags(soup) == (
+        None,
+        None,
+        None,
+    )
+
+def test_try_meta_tags_missing_availability():
+    html = """
+    <meta property="og:price:amount" content="99.95">
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert generic._try_meta_tags(soup) == (
+        99.95,
+        None,
+        None,
+    )
+
+def test_try_meta_tags_falls_back_when_og_price_unparseable():
+    html = """
+    <meta property="og:price:amount" content="Contact us for pricing">
+    <meta property="product:price:amount" content="29.99">
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert generic._try_meta_tags(soup) == (
+        29.99,
+        None,
+        None,
+    )

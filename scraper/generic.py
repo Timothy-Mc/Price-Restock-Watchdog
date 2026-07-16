@@ -54,6 +54,7 @@ def _parse_availability(value: str | None) -> bool | None:
     if normalise in unavailable_terms:
         return False
     
+    return None
 
 def _try_json_ld(soup) -> tuple[float | None, bool | None, str | None]:
     scripts = soup.find_all("script", type="application/ld+json")
@@ -94,3 +95,25 @@ def _try_json_ld(soup) -> tuple[float | None, bool | None, str | None]:
             return price, availability, name
         
     return None, None, None
+
+def _try_meta_tags(soup) -> tuple[float | None, bool | None, str | None]:
+    price = None
+
+    for property_tag in ["og:price:amount", "product:price:amount"]:
+        price_tag = soup.find("meta", property=property_tag)
+        if not price_tag:
+            continue
+
+        parsed_price = _parse_price(price_tag.get("content"))
+
+        if parsed_price is not None:
+            price = parsed_price
+            break
+
+    name_tag = soup.find("meta", property="og:title")
+    name = name_tag.get("content") if name_tag else None
+
+    availability_tag = soup.find("meta", property="product:availability")
+    in_stock = (_parse_availability(availability_tag.get("content")) if availability_tag else None)
+
+    return (price, in_stock, name)
