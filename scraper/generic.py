@@ -117,3 +117,17 @@ def _try_meta_tags(soup) -> tuple[float | None, bool | None, str | None]:
     in_stock = (_parse_availability(availability_tag.get("content")) if availability_tag else None)
 
     return (price, in_stock, name)
+
+def _try_css_heuristics(soup) -> tuple[float | None, bool | None, str | None]:
+    price = None
+    
+    price_element = soup.select_one('[class*="price"]')
+
+    if price_element:
+        price = _parse_price(price_element.get_text())
+    
+    title_element = soup.find("title")
+
+    name = title_element.get_text(strip=True) if title_element else None
+
+    return (price, None, name)

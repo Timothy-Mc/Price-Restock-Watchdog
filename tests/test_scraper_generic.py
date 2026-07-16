@@ -203,3 +203,47 @@ def test_try_meta_tags_falls_back_when_og_price_unparseable():
         None,
         None,
     )
+
+def test_try_css_heuristics_extracts_price_and_title():
+    html = """
+    <html>
+        <head>
+            <title>Test Product</title>
+        </head>
+        <body>
+            <div class="product-price">$34.50</div>
+        </body>
+    </html>
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    result = generic._try_css_heuristics(soup)
+
+    assert result == (
+        34.50,
+        None,
+        "Test Product",
+    )
+
+def test_try_css_heuristics_without_price_returns_title():
+    html = """
+    <html>
+        <head>
+            <title>Product Without Price</title>
+        </head>
+        <body>
+            <div class="cost">$50</div>
+        </body>
+    </html>
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    result = generic._try_css_heuristics(soup)
+
+    assert result == (
+        None,
+        None,
+        "Product Without Price",
+    )
