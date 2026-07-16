@@ -1,4 +1,5 @@
 import pytest
+import requests
 from bs4 import BeautifulSoup
 
 from scraper import generic
@@ -247,3 +248,77 @@ def test_try_css_heuristics_without_price_returns_title():
         None,
         "Product Without Price",
     )
+
+
+class _FakeResponse:
+    def __init__(self, text, status_code=200):
+        self.text = text
+        self.status_code = status_code
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError(f"{self.status_code} error")
+
+
+def test_scrape_generic_prefers_json_ld_over_other_strategies(monkeypatch):
+    html = """
+    <html><head>
+    <meta property="og:price:amount" content="999.00" />
+    <script type="application/ld+json">
+    {"@type": "Product", "name": "Widget", "offers": {"price": "49.95", "availability": "https://schema.org/InStock"}}
+    </script>
+    </head><body><div class="price">1.00</div></body></html>
+    """
+    monkeypatch.setattr(requests.Session, "get", lambda self, url, timeout: _FakeResponse(html))
+
+    price, in_stock, name = generic.scrape_generic("https://example.com/product")
+
+    assert price == 49.95
+    assert in_stock is True
+    assert name == "Widget"
+
+def test_scrape_generic_falls_back_to_meta_tags(monkeypatch):
+    html = '<html><head><meta property="og:price:amount" content="59.99" /></head><body></body></html>'
+    monkeypatch.setattr(requests.Session, "get", lambda self, url, timeout: _FakeResponse(html))
+
+    price, in_stock, name = generic.scrape_generic("https://example.com/product")
+
+    assert price == 59.99
+
+def test_scrape_generic_falls_back_to_css_heuristics(monkeypatch):
+    html = '<html><body><div class="price">$12.00</div></body></html>'
+    monkeypatch.setattr(requests.Session, "get", lambda self, url, timeout: _FakeResponse(html))
+
+    price, in_stock, name = generic.scrape_generic("https://example.com/product")
+
+    assert price == 12.00
+
+def test_scrape_generic_returns_none_tuple_when_no_strategy_matches(monkeypatch, caplog):
+    html = "<html><body>nothing here</body></html>"
+    monkeypatch.setattr(requests.Session, "get", lambda self, url, timeout: _FakeResponse(html))
+
+    price, in_stock, name = generic.scrape_generic("https://example.com/product")
+
+    assert (price, in_stock, name) == (None, None, None)
+    assert "example.com" in caplog.text
+
+def test_scrape_generic_raises_on_http_error(monkeypatch):
+    monkeypatch.setattr(
+        requests.Session, "get", lambda self, url, timeout: _FakeResponse("", status_code=403)
+    )
+
+    with pytest.raises(requests.HTTPError):
+        generic.scrape_generic("https://example.com/product")
+
+def test_scrape_generic_sets_a_user_agent_header(monkeypatch):
+    captured = {}
+
+    def fake_get(self, url, timeout):
+        captured["user_agent"] = self.headers.get("User-Agent")
+        return _FakeResponse("<html></html>")
+
+    monkeypatch.setattr(requests.Session, "get", fake_get)
+
+    generic.scrape_generic("https://example.com/product")
+
+    assert captured["user_agent"] in generic.USER_AGENTS
