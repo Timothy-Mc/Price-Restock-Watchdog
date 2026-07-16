@@ -128,7 +128,7 @@ def _try_json_ld(soup) -> tuple[float | None, bool | None, str | None]:
             if not isinstance(offers, dict):
                 continue
 
-            price = _parse_price(offers.get("price"))
+            price = _parse_price(str(offers.get("price")))
             availability = _parse_availability(offers.get("availability"))
             name = product.get("name")
 

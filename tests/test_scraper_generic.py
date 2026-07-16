@@ -139,6 +139,24 @@ def test_try_json_ld_skips_malformed_json_and_uses_next_script():
 
     assert generic._try_json_ld(soup) == (5.00, True, "Recovered Product")
 
+def test_try_json_ld_handles_price_as_json_number():
+    html = """
+    <script type="application/ld+json">
+    {
+        "@type": "Product",
+        "name": "Numeric Price Product",
+        "offers": {
+            "price": 799.0,
+            "availability": "https://schema.org/InStock"
+        }
+    }
+    </script>
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert generic._try_json_ld(soup) == (799.0, True, "Numeric Price Product")
+
 
 def test_try_meta_tags_uses_og_price():
     html = """
