@@ -19,7 +19,7 @@ def scrape(url) -> tuple[float | None, bool | None, str | None]:
 
 def _extract_state(html) -> dict:
     start = html.index(_STATE_MAKER) + len(_STATE_MAKER)
-
+    
     depth = 0
     end = None
 

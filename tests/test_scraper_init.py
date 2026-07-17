@@ -48,3 +48,27 @@ def test_scrape_url_never_raises_on_http_error(monkeypatch):
     result = scrape_url("https://example.com/product")
 
     assert result.error == "403 Forbidden"
+
+def test_scrape_url_routes_officeworks_domain_to_its_parser(monkeypatch):
+    monkeypatch.setattr(
+        scraper, "scrape_generic", lambda url: (999.0, True, "Should Not Be Called")
+    )
+    monkeypatch.setitem(
+        scraper.SITE_PARSERS, "www.officeworks.com.au", lambda url: (6.75, None, "J.Burrows Copy Paper"),
+    )
+    result = scrape_url("https://www.officeworks.com.au/shop/officeworks/p/test")
+
+    assert result == ScrapeResult(price=6.75, in_stock=None, name="J.Burrows Copy Paper", error=None)
+
+
+def test_scrape_url_uses_generic_for_unknown_domain(monkeypatch):
+    monkeypatch.setattr(
+        scraper, "scrape_generic", lambda url: (49.95, True, "Widget")
+    )
+    monkeypatch.setattr(
+        scraper.officeworks, "scrape", lambda url: (999.0, True, "Should Not Be Called")
+    )
+
+    result = scrape_url("https://example.com/product")
+
+    assert result == ScrapeResult(price=49.95, in_stock=True, name="Widget", error=None)
