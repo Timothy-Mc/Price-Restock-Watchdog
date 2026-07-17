@@ -23,13 +23,6 @@ window.__INITIAL_STATE__ = {"owProduct": {"product": {"sku": "TESTSKU1"}}};
 </script>
 """
 
-class _FakeResponse:
-    def __int__(self, text):
-        self.text = text
-
-    def raise_for_status(self):
-        pass
-
 def test_scrape_extracts_price_and_name_from_state_blob(monkeypatch):
     monkeypatch.setattr(http, "fetch_html", lambda url: _HAPPY_PATH_HTML)
 

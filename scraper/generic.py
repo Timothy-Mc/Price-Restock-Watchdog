@@ -1,8 +1,6 @@
 import re
 import json
-import requests
 import logging
-import random
 
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse

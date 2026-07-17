@@ -2,7 +2,7 @@ import json
 
 from scraper import http
 
-_STATE_MAKER = "window.__INITIAL_STATE__ = "
+_STATE_MARKER = "window.__INITIAL_STATE__ = "
 
 def scrape(url) -> tuple[float | None, bool | None, str | None]:
     html = http.fetch_html(url)
@@ -18,7 +18,7 @@ def scrape(url) -> tuple[float | None, bool | None, str | None]:
     return (price, None, name)
 
 def _extract_state(html) -> dict:
-    start = html.index(_STATE_MAKER) + len(_STATE_MAKER)
+    start = html.index(_STATE_MARKER) + len(_STATE_MARKER)
     
     depth = 0
     end = None

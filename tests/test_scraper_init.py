@@ -65,9 +65,6 @@ def test_scrape_url_uses_generic_for_unknown_domain(monkeypatch):
     monkeypatch.setattr(
         scraper, "scrape_generic", lambda url: (49.95, True, "Widget")
     )
-    monkeypatch.setattr(
-        scraper.officeworks, "scrape", lambda url: (999.0, True, "Should Not Be Called")
-    )
 
     result = scrape_url("https://example.com/product")
 
