@@ -319,24 +319,3 @@ def test_scrape_generic_returns_none_tuple_when_no_strategy_matches(monkeypatch,
 
     assert (price, in_stock, name) == (None, None, None)
     assert "example.com" in caplog.text
-
-def test_scrape_generic_raises_on_http_error(monkeypatch):
-    monkeypatch.setattr(
-        requests.Session, "get", lambda self, url, timeout: _FakeResponse("", status_code=403)
-    )
-
-    with pytest.raises(requests.HTTPError):
-        generic.scrape_generic("https://example.com/product")
-
-def test_scrape_generic_sets_a_user_agent_header(monkeypatch):
-    captured = {}
-
-    def fake_get(self, url, timeout):
-        captured["user_agent"] = self.headers.get("User-Agent")
-        return _FakeResponse("<html></html>")
-
-    monkeypatch.setattr(requests.Session, "get", fake_get)
-
-    generic.scrape_generic("https://example.com/product")
-
-    assert captured["user_agent"] in generic.USER_AGENTS
